@@ -10,7 +10,11 @@ import Adafruit_DHT
 dht_sensor = Adafruit_DHT.DHT22
 dht_pin = 4
 
+
 # Opening the file to write out
+if not os.path.exists('/home/pi/Documents/pi_sensor/output/'):
+    os.makedirs('/home/pi/Documents/pi_sensor/output/')
+
 try:
     f = open('/home/pi/Documents/pi_sensor/output/sensor_output.csv', 'a+')
     if os.stat('/home/pi/Documents/pi_sensor/output/sensor_output.csv').st_size == 0:
