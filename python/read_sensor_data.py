@@ -30,11 +30,12 @@ while True:
         # Adding C to F conversion
         temp_f = (temp_c * 9/5) + 32
 
-        print("Temp={0:0.1f} C ({1:0.1f} F) Humidity={2:0.1f}%".format(temp_c, temp_f, humidity))
+#        print("Temp={0:0.1f} C ({1:0.1f} F) Humidity={2:0.1f}%".format(temp_c, temp_f, humidity))
 
         # Writing to the file
         f.write('{0}\t{1}\t{2:0.1f}\t{3:0.1f}\t{4:0.1f}\r\n'.format(time.strftime('%m/%d/%y'),
         time.strftime('%H:%M'), temp_c, temp_f, humidity))
+        f.flush()
 
     else:
         print("Failed to retrieve data from humidity sensor")
