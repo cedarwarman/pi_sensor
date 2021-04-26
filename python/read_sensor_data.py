@@ -5,40 +5,77 @@
 import os
 import time
 import Adafruit_DHT
-
-# Defining some constants
-dht_sensor = Adafruit_DHT.DHT22
-dht_pin = 4
+import gspread
 
 
-# Opening the file to write out
-if not os.path.exists('/home/pi/Documents/pi_sensor/output/'):
-    os.makedirs('/home/pi/Documents/pi_sensor/output/')
+### Open the file to write out
+def open_output_file():
+    if not os.path.exists('/home/pi/Documents/pi_sensor/output/'):
+        os.makedirs('/home/pi/Documents/pi_sensor/output/')
 
-try:
-    f = open('/home/pi/Documents/pi_sensor/output/sensor_output.csv', 'a+')
-    if os.stat('/home/pi/Documents/pi_sensor/output/sensor_output.csv').st_size == 0:
-            f.write('date\ttime\ttemp_c\ttemp_f\thumidity\r\n')
-except:
-    pass
+    try:
+        f = open('/home/pi/Documents/pi_sensor/output/sensor_output.csv', 'a+')
+        if os.stat('/home/pi/Documents/pi_sensor/output/sensor_output.csv').st_size == 0:
+                f.write('date\ttime\ttemp_c\ttemp_f\thumidity\r\n')
+        return(f)
+    except:
+        pass
 
-# Reading the sensor and printing results
-while True:
+### Read the sensor 
+def read_sensor(dht_sensor, dht_pin):
     humidity, temp_c = Adafruit_DHT.read_retry(dht_sensor, dht_pin)
 
     if humidity is not None and temp_c is not None:
-        # Adding C to F conversion
+        # C to F conversion
         temp_f = (temp_c * 9/5) + 32
 
-#        print("Temp={0:0.1f} C ({1:0.1f} F) Humidity={2:0.1f}%".format(temp_c, temp_f, humidity))
+        # Test print
+        # print("Temp={0:0.1f} C ({1:0.1f} F) Humidity={2:0.1f}%".format(temp_c, temp_f, humidity))
 
-        # Writing to the file
-        f.write('{0}\t{1}\t{2:0.1f}\t{3:0.1f}\t{4:0.1f}\r\n'.format(time.strftime('%m/%d/%y'),
-        time.strftime('%H:%M'), temp_c, temp_f, humidity))
-        f.flush()
+        sensor_list = [time.strftime('%H:%M'), temp_c, temp_f, humidity]
+        return(sensor_list)
 
     else:
         print("Failed to retrieve data from humidity sensor")
 
-    time.sleep(120)
 
+### Append to file
+def append_file(input_file_handle, input_list):
+    input_file_handle.write('{0}\t{1}\t{2:0.1f}\t{3:0.1f}\t{4:0.1f}\r\n'.format(time.strftime('%m/%d/%y'),
+    input_list[0], input_list[1], input_list[2], input_list[3]))
+    input_file_handle.flush()
+
+### Append to Google sheet
+def append_google_sheet(input_list):
+    # Setting up the service account info
+    # (/home/pi/.config/gspread/service_account.json)
+    gc = gspread.service_account()
+
+    # Reading the sheet
+    sheet = gc.open_by_key('1v0W5jSeF_wNWV9JCeZlG_zNOOsADDlPmwQSymcgLEJQ').sheet1    
+
+    # Writing the data
+    append_list = [time.strftime('%m/%d/%y'), 
+    input_list[0], 
+    round(input_list[1], 1), 
+    round(input_list[2], 1), 
+    round(input_list[3], 1)]
+    sheet.append_row(append_list)
+
+
+def main():
+    # Defining some constants
+    dht_sensor = Adafruit_DHT.DHT22
+    dht_pin = 4
+
+    While True:
+        f = open_output_file()
+        sensor_output = read_sensor(dht_sensor, dht_pin)
+        print(sensor_output)
+        append_file(f, sensor_output)
+        append_google_sheet(sensor_output)
+        time.sleep(60)
+
+
+if __name__ == "__main__":
+    main()
