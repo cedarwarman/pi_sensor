@@ -38,29 +38,34 @@ def read_sensor(dht_sensor, dht_pin):
     else:
         print("Failed to retrieve data from humidity sensor")
 
-
 ### Append to file
 def append_file(input_file_handle, input_list):
-    input_file_handle.write('{0}\t{1}\t{2:0.1f}\t{3:0.1f}\t{4:0.1f}\r\n'.format(time.strftime('%Y-%m-%d'),
-    input_list[0], input_list[1], input_list[2], input_list[3]))
-    input_file_handle.flush()
+    try:
+        input_file_handle.write('{0}\t{1}\t{2:0.1f}\t{3:0.1f}\t{4:0.1f}\r\n'.format(time.strftime('%Y-%m-%d'),
+        input_list[0], input_list[1], input_list[2], input_list[3]))
+        input_file_handle.flush()
+    except:
+        print("Fail to write to file")
 
 ### Append to Google sheet
 def append_google_sheet(input_list):
-    # Setting up the service account info
-    # (/home/pi/.config/gspread/service_account.json)
-    gc = gspread.service_account()
+    try:
+        # Setting up the service account info
+        # (/home/pi/.config/gspread/service_account.json)
+        gc = gspread.service_account()
 
-    # Reading the sheet
-    sheet = gc.open_by_key('1v0W5jSeF_wNWV9JCeZlG_zNOOsADDlPmwQSymcgLEJQ').sheet1    
+        # Reading the sheet
+        sheet = gc.open_by_key('1v0W5jSeF_wNWV9JCeZlG_zNOOsADDlPmwQSymcgLEJQ').sheet1    
 
-    # Writing the data
-    append_list = [time.strftime('%Y-%m-%d'), 
-    input_list[0], 
-    round(input_list[1], 1), 
-    round(input_list[2], 1), 
-    round(input_list[3], 1)]
-    sheet.append_row(append_list)
+        # Writing the data
+        append_list = [time.strftime('%Y-%m-%d'), 
+        input_list[0], 
+        round(input_list[1], 1), 
+        round(input_list[2], 1), 
+        round(input_list[3], 1)]
+        sheet.append_row(append_list)
+    except:
+        print("Failed to upload to Google Sheets")
 
 
 def main():
