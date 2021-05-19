@@ -48,14 +48,14 @@ def append_file(input_file_handle, input_list):
         print("Fail to write to file")
 
 ### Append to Google sheet
-def append_google_sheet(input_list):
+def append_google_sheet(input_list, sheet_key):
     try:
         # Setting up the service account info
         # (/home/pi/.config/gspread/service_account.json)
         gc = gspread.service_account()
 
         # Reading the sheet
-        sheet = gc.open_by_key('1v0W5jSeF_wNWV9JCeZlG_zNOOsADDlPmwQSymcgLEJQ').sheet1    
+        sheet = gc.open_by_key(sheet_key).sheet1    
 
         # Writing the data
         append_list = [time.strftime('%Y-%m-%d'), 
@@ -77,9 +77,13 @@ def main():
     while True:
         f = open_output_file()
         sensor_output = read_sensor(dht_sensor, dht_pin)
-        print(sensor_output)
+        # print(sensor_output)
         append_file(f, sensor_output)
-        append_google_sheet(sensor_output)
+        # Appends to sheet that has all the data
+        append_google_sheet(sensor_output, '1v0W5jSeF_wNWV9JCeZlG_zNOOsADDlPmwQSymcgLEJQ')
+        # Appends to sheet that just has the past 7 days (pruned by another
+        # script on a different raspberry pi)
+        append_google_sheet(sensor_output, '1pb0uU-8VST4gp8zkbDiO0YNfAKdsnvoKgLZ63juG27I')
         time.sleep(60.0 - ((time.time() - start_time) % 60.0))
 
 
