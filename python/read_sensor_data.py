@@ -84,6 +84,8 @@ def main():
         # Appends to sheet that just has the past 7 days (pruned by another
         # script on a different raspberry pi)
         append_google_sheet(sensor_output, '1pb0uU-8VST4gp8zkbDiO0YNfAKdsnvoKgLZ63juG27I')
+        # Appends to sheet that has the past 30 days
+        append_google_sheet(sensor_output, '19EM5mkx01ewRcHHf3mJaULZlADGzxKCkPbC00iH8mNM')
         time.sleep(60.0 - ((time.time() - start_time) % 60.0))
 
 
