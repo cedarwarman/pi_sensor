@@ -32,7 +32,7 @@ def read_sensor(dht_sensor, dht_pin):
         # Test print
         # print("Temp={0:0.1f} C ({1:0.1f} F) Humidity={2:0.1f}%".format(temp_c, temp_f, humidity))
 
-        sensor_list = [time.strftime('%H:%M'), temp_c, temp_f, humidity]
+        sensor_list = [time.strftime('%H:%M:%S'), temp_c, temp_f, humidity]
         return(sensor_list)
 
     else:
@@ -41,7 +41,7 @@ def read_sensor(dht_sensor, dht_pin):
 
 ### Append to file
 def append_file(input_file_handle, input_list):
-    input_file_handle.write('{0}\t{1}\t{2:0.1f}\t{3:0.1f}\t{4:0.1f}\r\n'.format(time.strftime('%m/%d/%y'),
+    input_file_handle.write('{0}\t{1}\t{2:0.1f}\t{3:0.1f}\t{4:0.1f}\r\n'.format(time.strftime('%Y-%m-%d'),
     input_list[0], input_list[1], input_list[2], input_list[3]))
     input_file_handle.flush()
 
@@ -55,7 +55,7 @@ def append_google_sheet(input_list):
     sheet = gc.open_by_key('1v0W5jSeF_wNWV9JCeZlG_zNOOsADDlPmwQSymcgLEJQ').sheet1    
 
     # Writing the data
-    append_list = [time.strftime('%m/%d/%y'), 
+    append_list = [time.strftime('%Y-%m-%d'), 
     input_list[0], 
     round(input_list[1], 1), 
     round(input_list[2], 1), 
@@ -67,14 +67,15 @@ def main():
     # Defining some constants
     dht_sensor = Adafruit_DHT.DHT22
     dht_pin = 4
+    start_time = time.time() # Initial time for fancy sleep
 
-    While True:
+    while True:
         f = open_output_file()
         sensor_output = read_sensor(dht_sensor, dht_pin)
         print(sensor_output)
         append_file(f, sensor_output)
         append_google_sheet(sensor_output)
-        time.sleep(60)
+        time.sleep(60.0 - ((time.time() - start_time) % 60.0))
 
 
 if __name__ == "__main__":
