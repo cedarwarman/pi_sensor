@@ -6,6 +6,30 @@ import os
 import time
 import Adafruit_DHT
 import gspread
+import argparse
+
+### Setting up arguments
+parser = argparse.ArgumentParser(description='Read Raspberry Pi DHT22 sensor data')
+parser.add_argument('-p',
+                    '--path',
+                    type=str,
+                    help='Path to Google Sheet URL code file')
+args = parser.parse_args()
+print("path is: ")
+print(args.path)
+
+### Open Google Sheet URLs file
+# The url file is a tsv file with key value pairs as follows:
+# all   Google_spreadsheet_ID
+# week  Google_spreadsheet_ID
+# month Google_spreadsheet_ID
+def open_url_file(file_path):
+    url_dict = {}
+    with open(file_path, 'r') as url_file:
+        for line in url_file:
+            (key, value) = line.split()
+            url_dict[key] = value
+    return(url_dict)
 
 
 ### Open the file to write out
@@ -20,6 +44,7 @@ def open_output_file():
         return(f)
     except:
         pass
+
 
 ### Read the sensor 
 def read_sensor(dht_sensor, dht_pin, input_time):
@@ -38,6 +63,7 @@ def read_sensor(dht_sensor, dht_pin, input_time):
     else:
         print("Failed to retrieve data from humidity sensor")
 
+
 ### Append to file
 def append_file(input_file_handle, input_list, input_time):
     try:
@@ -47,6 +73,7 @@ def append_file(input_file_handle, input_list, input_time):
         input_file_handle.flush()
     except:
         print("Fail to write to file")
+
 
 ### Append to Google sheet
 def append_google_sheet(input_list, sheet_key, input_time):
@@ -75,7 +102,9 @@ def main():
     dht_sensor = Adafruit_DHT.DHT22
     dht_pin = 4
     start_time = time.time() # Initial time for fancy sleep
-
+    # Opening the file with the Google sheet IDs
+    ###### FIX THIS IN SYSTEMCTL #####
+    sheet_ids = open_url_file('/home/pi/Documents/pi_sensor/url/marley_1.tsv')
 
     while True:
         # Gives everything the same time to fix a bug that came from calling 
@@ -87,15 +116,12 @@ def main():
         # print(sensor_output)
         append_file(f, sensor_output, read_time)
         # Appends to sheet that has all the data
-        append_google_sheet(sensor_output,
-        '1Byxkjq1Jl_O6cyOrBp6yO_vHAI4FSbJkKZetLsOhwZc', read_time)
+        append_google_sheet(sensor_output, sheet_ids.get('all'), read_time)
         # Appends to sheet that just has the past 7 days (pruned by another
         # script on a different raspberry pi)
-        append_google_sheet(sensor_output,
-        '1cF2DWhlWZ6CYsZU7B6akx4X9EFrqh33oHst0ZKH6AYA', read_time)
+        append_google_sheet(sensor_output, sheet_ids.get('week'), read_time)
         # Appends to sheet that has the past 30 days
-        append_google_sheet(sensor_output,
-        '150Or_GGUti5W4-Y0E3EUxnqdM7RJi82mYjM9qIvii3k', read_time)
+        append_google_sheet(sensor_output, sheet_ids.get('month'), read_time)
         time.sleep(60.0 - ((time.time() - start_time) % 60.0))
 
 

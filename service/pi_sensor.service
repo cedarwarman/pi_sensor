@@ -1,0 +1,11 @@
+[Unit]
+Description=pi_sensor
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /home/pi/Documents/pi_sensor/python/read_sensor_data.py -p '/home/pi/Documents/pi_sensor/url/marley_1.tsv'
+Restart=always
+User=pi
+
+[Install]
+WantedBy=multi-user.target

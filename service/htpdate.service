@@ -1,0 +1,13 @@
+[Unit]
+Description=htpdate daemon
+After=network.target
+
+[Service]
+Type=forking
+PIDFile=/run/htpdate
+Environment=HTPDATE_ARGS="-a -s -t www.linux.org www.freebsd.org"
+EnvironmentFile=-/etc/default/htpdate
+ExecStart=/usr/sbin/htpdate -D -i /var/run/htpdate $HTPDATE_ARGS
+
+[Install]
+WantedBy=multi-user.target
