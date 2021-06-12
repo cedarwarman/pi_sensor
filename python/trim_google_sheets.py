@@ -1,25 +1,37 @@
 #!/usr/bin/env python3
 
-import time
-#import gspread
+import datetime as DT
 import argparse
 import pandas as pd
 from gspread_pandas import Spread
 
-# Opening a spreadsheet
-input_sheet = Spread('15Ak9f5qAX8dY5QKb9ZHiYEmtQF3dSgMBgc1LH5VKRwM')
+### Trim sheet
+def trim_sheet(days, sheet_id):
+    # Setting dates
+    current_date = pd.Timestamp('today').floor('D')
+    start_date = current_date - pd.Timedelta(days, unit='D')
+    print(current_date)
+    print(start_date)
 
-# Converting to dataframe
-df = input_sheet.sheet_to_df(index=None)
+    # Opening a spreadsheet
+    input_sheet = Spread(sheet_id)
 
-print("the spreadsheet:")
-print(df)
-#print(df.dtypes)
-#print(df.iloc[:, 0])
+    # Converting to dataframe
+    df = input_sheet.sheet_to_df(index=None)
+    print(df)
 
-# Testing conversion of date column to datetime type
-date_column = df.loc[:,'date']
-print("Date column:")
-print(date_column)
-print("Converted to time object:")
-print(pd.to_datetime(date_column, format='%Y-%m-%d'))
+    # Converting date column to datetime type
+    df.loc[:,'date'] = pd.to_datetime(df.loc[:,'date'], format='%Y-%m-%d')
+
+    # Subsetting dataframe to past x days
+    df = df[(df['date'] > start_date) & (df['date'] <= current_date)]
+    print(df)
+
+
+### Main
+def main():
+    trim_sheet(7, '15Ak9f5qAX8dY5QKb9ZHiYEmtQF3dSgMBgc1LH5VKRwM')
+
+
+if __name__ == "__main__":
+    main()
