@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import datetime as DT
 import argparse
 import pandas as pd
 from gspread_pandas import Spread
@@ -27,6 +26,22 @@ def trim_sheet(days, sheet_id):
     df = df[(df['date'] > start_date) & (df['date'] <= current_date)]
     print(df)
 
+    # Converting back to string for upload (the apostrophe is for google sheets
+    # to not convert it back to a date, because this breaks the R script).
+    df.loc[:,'date'] = "'" + df.loc[:,'date'].dt.strftime('%Y-%m-%d')
+
+    # Adding apostrophe to time for google sheets
+
+    df.loc[:,'time'] = "'" + df.loc[:,'time']
+
+    print(df.dtypes)
+
+    # Uploading the new sheet
+    input_sheet.df_to_sheet(df, 
+        index=False, 
+        replace=True)
+
+#def update_sheet(input_df)
 
 ### Main
 def main():
