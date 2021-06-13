@@ -1,8 +1,36 @@
 #!/usr/bin/env python3
 
+import os
+import glob
 import argparse
 import pandas as pd
 from gspread_pandas import Spread
+
+### Setting up arguments
+parser = argparse.ArgumentParser(description='Trim sheets to most recent x days')
+parser.add_argument('-p',
+                    '--path',
+                    type=str,
+                    default='../url/',
+                    help='Path to Google Sheet URL code file')
+args = parser.parse_args()
+
+### Make URL dictionary
+def make_url_dict(dir_path):
+    url_dict = {}
+    for file_path in glob.glob(dir_path + '*'):
+        with open(file_path, 'r') as url_file:
+            # Getting the file name
+            file_string = os.path.basename(file_path)
+            file_string = os.path.splitext(file_string)[0]
+            nest_dict = {}
+            for line in url_file:
+                # Adding values to the nested dictionary
+                (key, value) = line.split()
+                nest_dict[key] = value
+            # Adding the nested dictionary to the main dictionary
+            url_dict[file_string] = nest_dict
+    return(url_dict)
 
 ### Trim sheet
 def trim_sheet(days, sheet_id):
@@ -41,11 +69,28 @@ def trim_sheet(days, sheet_id):
         index=False, 
         replace=True)
 
-#def update_sheet(input_df)
 
 ### Main
 def main():
-    trim_sheet(7, '15Ak9f5qAX8dY5QKb9ZHiYEmtQF3dSgMBgc1LH5VKRwM')
+    url_dict = make_url_dict(args.path)
+    #print(url_dict)
+    for nest_dict in url_dict.values():
+        print(nest_dict)
+        for key, sheet_id in nest_dict.items():
+            print("Key is: " + key)
+            if key == 'week':
+                print(key)
+                print(sheet_id)
+                trim_sheet(7, sheet_id)
+            elif key == 'month':
+                print(key)
+                print(sheet_id)
+                trim_sheet(30, sheet_id)
+            else:
+                print("pass")
+                pass
+
+
 
 
 if __name__ == "__main__":
