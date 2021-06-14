@@ -111,18 +111,13 @@ def append_google_sheet(input_list, sheet_key, input_time):
 
 
 def main():
-    print("started program")
-    # Defining some constants
     dht_sensor = Adafruit_DHT.DHT22
-    #dht_pin = 4
     start_time = time.time() # Initial time for fancy sleep
     # Opening the file with the Google sheet IDs
     ######              FIX THIS IN SYSTEMCTL            ######
     ###### CURRENTLY: ADD SENSORS TO MEASURE TO LIST ARG ######
     sheet_ids = open_url_files('/home/pi/Documents/pi_sensor/url/', 
         ["home_1", "home_2"]) ###### CHANGE SENSORS HERE
-    print("this is the library:")
-    print(sheet_ids)
 
     f = open_output_file()
 
@@ -132,13 +127,8 @@ def main():
         read_time = time.localtime()
         
         for sensor_location, sensor_dict in sheet_ids.items():
-            print("In for loop")
-            print(sensor_location)
-            print(sensor_dict)
-
             dht_pin = sensor_dict.get('pin')
             sensor_output = read_sensor(dht_sensor, dht_pin, read_time)
-            print(sensor_output)
             append_file(f, sensor_output, read_time, dht_pin)
             # Appends to sheet that has all the data
             append_google_sheet(sensor_output, sensor_dict.get('all'), read_time)
@@ -147,7 +137,8 @@ def main():
             append_google_sheet(sensor_output, sensor_dict.get('week'), read_time)
             # Appends to sheet that has the past 30 days
             append_google_sheet(sensor_output, sensor_dict.get('month'), read_time)
-            time.sleep(60.0 - ((time.time() - start_time) % 60.0))
+
+        time.sleep(60.0 - ((time.time() - start_time) % 60.0))
 
 
 if __name__ == "__main__":
