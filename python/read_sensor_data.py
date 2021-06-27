@@ -116,8 +116,8 @@ def main():
     # Opening the file with the Google sheet IDs
     ######              FIX THIS IN SYSTEMCTL            ######
     ###### CURRENTLY: ADD SENSORS TO MEASURE TO LIST ARG ######
-    sheet_ids = open_url_files('/home/pi/Documents/pi_sensor/url/', 
-        ["home_1", "home_2"]) ###### CHANGE SENSORS HERE
+    sheet_ids = open_url_files('/home/pi/git/pi_sensor/url/', 
+        ["home_livingroom", "home_outside"]) ###### CHANGE SENSORS HERE
 
     f = open_output_file()
 
@@ -138,7 +138,7 @@ def main():
             # Appends to sheet that has the past 30 days
             append_google_sheet(sensor_output, sensor_dict.get('month'), read_time)
 
-        time.sleep(60.0 - ((time.time() - start_time) % 60.0))
+        time.sleep(120.0 - ((time.time() - start_time) % 60.0))
 
 
 if __name__ == "__main__":
