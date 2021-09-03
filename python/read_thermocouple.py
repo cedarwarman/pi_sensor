@@ -26,9 +26,12 @@ def create_sensor():
     # Allocate CS pin and set direction
     cs = digitalio.DigitalInOut(board.D5)
     cs.direction = digitalio.Direction.OUTPUT
+
+    # Make it work with type T thermocouple
+    tc_type = adafruit_max31856.ThermocoupleType.T
     
     # Create thermocouple object
-    thermocouple = adafruit_max31856.MAX31856(spi,cs)
+    thermocouple = adafruit_max31856.MAX31856(spi,cs,tc_type)
 
     return(thermocouple)
     
@@ -39,49 +42,31 @@ def create_sensor():
 
 def create_led_device():
     # create matrix device
-    serial = spi(port=0, device=0, gpio=noop())
+    serial = spi(port=0, device=1, gpio=noop())
     device = max7219(serial, cascaded=4, block_orientation=-90,
                      rotate=0, blocks_arranged_in_reverse_order=False)
     return(device)
 
 if __name__ == "__main__":
     # Setting up the thermocouple
-#    thermocouple = create_sensor()
-
-    # Getting the temp
-    #msg = str(thermocouple.temperature)
-    #msg = re.sub(" +", " ", msg)
-    msg = "36.6123456"
-#    print(msg)
+    thermocouple = create_sensor()
 
     # Setting up the display
     device = create_led_device()
 
     # Showing the temp on the display
     #show_message(device, msg, fill="white", font=proportional(CP437_FONT))
-    while True:
-        with canvas(device) as draw:
-            text(draw, (0,0), msg, fill="white", font=proportional(LCD_FONT))
 
-## create matrix device
-#    serial = spi(port=0, device=0, gpio=noop())
-#    device = max7219(serial, cascaded=4, block_orientation=-90,
-#                     rotate=0, blocks_arranged_in_reverse_order=False)
-#    print("Created device")
-#
-#    # start demo
-##    msg = "MAX7219 LED Matrix Demo"
-#    print(msg)
-#    show_message(device, msg, fill="white", font=proportional(CP437_FONT))
-#    time.sleep(1)
-#
-#    msg = "Fast scrolling: Lorem ipsum dolor sit amet, consectetur adipiscing\
-#    elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut\
-#    enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut\
-#    aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in\
-#    voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint\
-#    occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit\
-#    anim id est laborum."
-#    msg = re.sub(" +", " ", msg)
-#    print(msg)
-#    show_message(device, msg, fill="white", font=proportional(LCD_FONT), scroll_delay=0)
+    # Opening message
+    msg = "Thermocouple active"
+    show_message(device, msg, fill="white", font=proportional(LCD_FONT), scroll_delay=0.05)
+
+    # Temperature loop
+    while True:
+        # Getting the temp
+        temp_string = str(thermocouple.temperature)
+
+        with canvas(device) as draw:
+            text(draw, (0,0), temp_string, fill="white", font=proportional(LCD_FONT))
+
+        time.sleep(1)
