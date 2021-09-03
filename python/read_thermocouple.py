@@ -64,7 +64,7 @@ if __name__ == "__main__":
     # Temperature loop
     while True:
         # Getting the temp
-        temp_string = str(thermocouple.temperature)
+        temp_string = str(format(thermocouple.temperature, '.4f'))
 
         with canvas(device) as draw:
             text(draw, (0,0), temp_string, fill="white", font=proportional(LCD_FONT))
