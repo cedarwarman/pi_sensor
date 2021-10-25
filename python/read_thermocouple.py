@@ -3,8 +3,11 @@
 # Data reading adapted from:
 # https://learn.adafruit.com/adafruit-max31856-thermocouple-amplifier/python-circuitpython
 
+import os
 import time
+import glob
 import board
+import gspread
 import digitalio
 import adafruit_max31856
 
@@ -19,6 +22,52 @@ from luma.core.virtual import viewport
 from luma.core.legacy import text, show_message
 from luma.core.legacy.font import proportional, CP437_FONT, TINY_FONT, SINCLAIR_FONT, LCD_FONT
 
+### Open Google Sheet URLs file
+# The url file is a tsv file with key value pairs as follows:
+# all   Google_spreadsheet_ID
+# week  Google_spreadsheet_ID
+# month Google_spreadsheet_ID
+def open_url_files(dir_path, sensor_list):
+    url_dict = {}
+    for file_path in glob.glob(dir_path + '*'):
+        print("working on " + file_path)
+        # Getting the file name
+        file_string = os.path.basename(file_path)
+        file_string = os.path.splitext(file_string)[0]
+        # Checking to see if it's on the sensor_list
+        print("file_string: " + file_string)
+        #print("sensor_list: " + sensor_list)
+        if any(sensor_string in file_string for sensor_string in sensor_list):
+            print("Matched string")
+            with open(file_path, 'r') as url_file:
+                nest_dict = {}
+                for line in url_file:
+                    # Adding values to the nested dictionary
+                    (key, value) = line.split()
+                    nest_dict[key] = value
+                # Adding the nested dictionary to the main dictionary
+                url_dict[file_string] = nest_dict
+        else:
+            print("no match")
+    return(url_dict)
+
+### Append to Google sheet
+def append_google_sheet(input_list, sheet_key):
+    try:
+        # Setting up the service account info
+        # (/home/pi/.config/gspread/service_account.json)
+        gc = gspread.service_account()
+
+        # Reading the sheet
+        sheet = gc.open_by_key(sheet_key).sheet1
+
+        # Writing the data
+        append_list = input_list
+
+        sheet.append_row(append_list)
+    except Exception as e: print(repr(e))
+
+### Make a sensor
 def create_sensor():
     # Create sensor object
     spi = board.SPI()
@@ -40,6 +89,8 @@ def create_sensor():
     #	print(thermocouple.temperature)
     #    time.sleep(1.0)
 
+
+### Make an LED screen
 def create_led_device():
     # create matrix device
     serial = spi(port=0, device=1, gpio=noop())
@@ -54,6 +105,9 @@ if __name__ == "__main__":
     # Setting up the display
     device = create_led_device()
 
+    # Loading the file with the Google sheet IDs
+    sheet_ids = open_url_files('/home/pi/git/pi_sensor/url/', ['thermocouple_1'])
+
     # Showing the temp on the display
     #show_message(device, msg, fill="white", font=proportional(CP437_FONT))
 
@@ -63,10 +117,21 @@ if __name__ == "__main__":
 
     # Temperature loop
     while True:
-        # Getting the temp
-        temp_string = str(format(thermocouple.temperature, '.4f'))
+        # This comes from copying code from the temp/humidity sensors, 
+        # but might be useful if I ever have more than 1 thermocouple
+        for sensor_location, sensor_dict in sheet_ids.items():
+            # Getting the temp
+            temp_string = str(format(thermocouple.temperature, '.4f'))
 
-        with canvas(device) as draw:
-            text(draw, (0,0), temp_string, fill="white", font=proportional(LCD_FONT))
+            # Displaying the temp on the LED matrix
+            with canvas(device) as draw:
+                text(draw, (0,0), temp_string, fill="white", font=proportional(LCD_FONT))
 
-        time.sleep(1)
+            # Going to try doing the upload here (this will only work if it's actually doing it every second):
+            if not (int(time.strftime('%S', time.localtime())) % 20):
+            #if True:
+                read_time = time.localtime()
+                upload_list = [time.strftime('%Y-%m-%d', read_time), time.strftime('%H:%M:%S', read_time), temp_string]
+                append_google_sheet(upload_list, sensor_dict.get('all'))
+
+            time.sleep(1)

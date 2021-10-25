@@ -1,0 +1,11 @@
+[Unit]
+Description=thermocouple
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /home/pi/git/pi_sensor/python/read_thermocouple.py
+Restart=always
+User=pi
+
+[Install]
+WantedBy=multi-user.target
