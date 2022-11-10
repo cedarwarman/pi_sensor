@@ -72,8 +72,8 @@ def create_sensor():
     # Create sensor object
     spi = board.SPI()
     
-    # Allocate CS pin (CE0) and set direction
-    cs = digitalio.DigitalInOut(board.D8)
+    # Allocate CS pin and set direction
+    cs = digitalio.DigitalInOut(board.D5)
     cs.direction = digitalio.Direction.OUTPUT
 
     # Make it work with type T thermocouple
@@ -94,8 +94,8 @@ def create_sensor():
 def create_led_device():
     # create matrix device (CS pin CE1 set in device argument)
     serial = spi(port=0, device=1, gpio=noop())
-    device = max7219(serial, cascaded=4, block_orientation=-90,
-                     rotate=0, blocks_arranged_in_reverse_order=False)
+    device = max7219(serial, cascaded=4, block_orientation=90,
+                     rotate=0, blocks_arranged_in_reverse_order=True)
     return(device)
 
 if __name__ == "__main__":
@@ -116,22 +116,36 @@ if __name__ == "__main__":
     show_message(device, msg, fill="white", font=proportional(LCD_FONT), scroll_delay=0.05)
 
     # Temperature loop
+
+    # Flag for uploading the data (only every 5 minutes, flag keeps it from 
+    # uploading a bunch of times when the minute is divisible by 5
+    uploaded_flag = False
+
     while True:
         # This comes from copying code from the temp/humidity sensors, 
         # but might be useful if I ever have more than 1 thermocouple
         for sensor_location, sensor_dict in sheet_ids.items():
             # Getting the temp
             temp_string = str(format(thermocouple.temperature, '.4f'))
+            print(temp_string)
 
             # Displaying the temp on the LED matrix
             with canvas(device) as draw:
                 text(draw, (0,0), temp_string, fill="white", font=proportional(LCD_FONT))
 
-            #  Uploading the data (only every 5 minutes
-            if not (int(time.strftime('%M', time.localtime())) % 5):
-            #if True:
+            # Uploading the data
+            if (not (int(time.strftime('%M', time.localtime())) % 3)) and not uploaded_flag:
                 read_time = time.localtime()
-                upload_list = [time.strftime('%Y-%m-%d', read_time), time.strftime('%H:%M:%S', read_time), temp_string]
+                upload_list = [time.strftime('%Y-%m-%d', read_time), time.strftime('%H:%M:%S', read_time)[:-2] + "00", temp_string]
                 append_google_sheet(upload_list, sensor_dict.get('all'))
+                append_google_sheet(upload_list, sensor_dict.get('week'))
+                append_google_sheet(upload_list, sensor_dict.get('month'))
 
-            time.sleep(1)
+                uploaded_flag = True
+
+            # Resets the uplaoded flag if the minute divisible by 3 has passed
+            if not ((int(time.strftime('%M', time.localtime())) - 1) % 3):
+                uploaded_flag = False
+
+            time.sleep(3)
+
